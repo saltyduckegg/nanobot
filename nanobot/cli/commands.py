@@ -354,7 +354,7 @@ def channels_status():
     table = Table(title="Channel Status")
     table.add_column("Channel", style="cyan")
     table.add_column("Enabled", style="green")
-    table.add_column("Bridge URL", style="yellow")
+    table.add_column("Info", style="yellow")
     
     wa = config.channels.whatsapp
     table.add_row(
@@ -363,6 +363,21 @@ def channels_status():
         wa.bridge_url
     )
     
+    tg = config.channels.telegram
+    table.add_row(
+        "Telegram",
+        "✓" if tg.enabled else "✗",
+        "Token set" if tg.token else "No token"
+    )
+
+    dc = getattr(config.channels, 'discord', None)
+    if dc:
+        table.add_row(
+            "Discord",
+            "✓" if dc.enabled else "✗",
+            "Token set" if dc.token else "No token"
+        )
+
     console.print(table)
 
 
