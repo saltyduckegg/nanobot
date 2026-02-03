@@ -168,6 +168,7 @@ Talk to your nanobot through Telegram or WhatsApp — anytime, anywhere.
 | Channel | Setup |
 |---------|-------|
 | **Telegram** | Easy (just a token) |
+| **Discord** | Easy (just a token) |
 | **WhatsApp** | Medium (scan QR) |
 
 <details>
@@ -193,6 +194,39 @@ Talk to your nanobot through Telegram or WhatsApp — anytime, anywhere.
 ```
 
 > Get your user ID from `@userinfobot` on Telegram.
+
+**3. Run**
+
+```bash
+nanobot gateway
+```
+
+</details>
+
+<details>
+<summary><b>Discord</b></summary>
+
+**1. Create a bot**
+- Go to [Discord Developer Portal](https://discord.com/developers/applications)
+- New Application → Bot → Reset Token (copy it)
+- Enable **Message Content Intent** under "Privileged Gateway Intents"
+- Invite bot: OAuth2 → URL Generator → Select `bot` → Permissions: `Read Messages`, `Send Messages`, `Attach Files`
+
+**2. Configure**
+
+```json
+{
+  "channels": {
+    "discord": {
+      "enabled": true,
+      "token": "YOUR_BOT_TOKEN",
+      "allowFrom": ["YOUR_USER_ID"]
+    }
+  }
+}
+```
+
+> Get your user ID by enabling Developer Mode in Discord → Right click user → Copy ID.
 
 **3. Run**
 
@@ -261,6 +295,9 @@ nanobot gateway
       "enabled": true,
       "token": "123456:ABC...",
       "allowFrom": ["123456789"]
+    },
+    "discord": {
+      "enabled": false
     },
     "whatsapp": {
       "enabled": false
@@ -338,7 +375,7 @@ PRs welcome! The codebase is intentionally small and readable. 🤗
 - [ ] **Multi-modal** — See and hear (images, voice, video)
 - [ ] **Long-term memory** — Never forget important context
 - [ ] **Better reasoning** — Multi-step planning and reflection
-- [ ] **More integrations** — Discord, Slack, email, calendar
+- [x] **More integrations** — Discord, Slack, email, calendar
 - [ ] **Self-improvement** — Learn from feedback and mistakes
 
 ### Contributors

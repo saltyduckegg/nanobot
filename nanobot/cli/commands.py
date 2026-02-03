@@ -181,8 +181,9 @@ def gateway(
     # Create provider (supports OpenRouter, Anthropic, OpenAI)
     api_key = config.get_api_key()
     api_base = config.get_api_base()
+    provider_format = config.get_provider_format()
     
-    if not api_key:
+    if not api_key and not provider_format:
         console.print("[red]Error: No API key configured.[/red]")
         console.print("Set one in ~/.nanobot/config.json under providers.openrouter.apiKey")
         raise typer.Exit(1)
@@ -190,7 +191,8 @@ def gateway(
     provider = LiteLLMProvider(
         api_key=api_key,
         api_base=api_base,
-        default_model=config.agents.defaults.model
+        default_model=config.agents.defaults.model,
+        provider_format=provider_format
     )
     
     # Create agent
@@ -289,8 +291,9 @@ def agent(
     
     api_key = config.get_api_key()
     api_base = config.get_api_base()
+    provider_format = config.get_provider_format()
     
-    if not api_key:
+    if not api_key and not provider_format:
         console.print("[red]Error: No API key configured.[/red]")
         raise typer.Exit(1)
     
@@ -298,7 +301,8 @@ def agent(
     provider = LiteLLMProvider(
         api_key=api_key,
         api_base=api_base,
-        default_model=config.agents.defaults.model
+        default_model=config.agents.defaults.model,
+        provider_format=provider_format
     )
     
     agent_loop = AgentLoop(
@@ -354,7 +358,7 @@ def channels_status():
     table = Table(title="Channel Status")
     table.add_column("Channel", style="cyan")
     table.add_column("Enabled", style="green")
-    table.add_column("Bridge URL", style="yellow")
+    table.add_column("Info", style="yellow")
     
     wa = config.channels.whatsapp
     table.add_row(
@@ -363,6 +367,21 @@ def channels_status():
         wa.bridge_url
     )
     
+    tg = config.channels.telegram
+    table.add_row(
+        "Telegram",
+        "✓" if tg.enabled else "✗",
+        "Token set" if tg.token else "No token"
+    )
+
+    dc = getattr(config.channels, 'discord', None)
+    if dc:
+        table.add_row(
+            "Discord",
+            "✓" if dc.enabled else "✗",
+            "Token set" if dc.token else "No token"
+        )
+
     console.print(table)
 
 
