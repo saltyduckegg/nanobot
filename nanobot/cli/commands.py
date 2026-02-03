@@ -181,8 +181,9 @@ def gateway(
     # Create provider (supports OpenRouter, Anthropic, OpenAI)
     api_key = config.get_api_key()
     api_base = config.get_api_base()
+    provider_format = config.get_provider_format()
     
-    if not api_key:
+    if not api_key and not provider_format:
         console.print("[red]Error: No API key configured.[/red]")
         console.print("Set one in ~/.nanobot/config.json under providers.openrouter.apiKey")
         raise typer.Exit(1)
@@ -190,7 +191,8 @@ def gateway(
     provider = LiteLLMProvider(
         api_key=api_key,
         api_base=api_base,
-        default_model=config.agents.defaults.model
+        default_model=config.agents.defaults.model,
+        provider_format=provider_format
     )
     
     # Create agent
@@ -289,8 +291,9 @@ def agent(
     
     api_key = config.get_api_key()
     api_base = config.get_api_base()
+    provider_format = config.get_provider_format()
     
-    if not api_key:
+    if not api_key and not provider_format:
         console.print("[red]Error: No API key configured.[/red]")
         raise typer.Exit(1)
     
@@ -298,7 +301,8 @@ def agent(
     provider = LiteLLMProvider(
         api_key=api_key,
         api_base=api_base,
-        default_model=config.agents.defaults.model
+        default_model=config.agents.defaults.model,
+        provider_format=provider_format
     )
     
     agent_loop = AgentLoop(

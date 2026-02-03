@@ -21,10 +21,12 @@ class LiteLLMProvider(LLMProvider):
         self, 
         api_key: str | None = None, 
         api_base: str | None = None,
-        default_model: str = "anthropic/claude-opus-4-5"
+        default_model: str = "anthropic/claude-opus-4-5",
+        provider_format: str | None = None
     ):
         super().__init__(api_key, api_base)
         self.default_model = default_model
+        self.provider_format = provider_format
         
         # Detect OpenRouter by api_key prefix or explicit api_base
         self.is_openrouter = (
@@ -33,7 +35,7 @@ class LiteLLMProvider(LLMProvider):
         )
         
         # Track if using custom endpoint (vLLM, etc.)
-        self.is_vllm = bool(api_base) and not self.is_openrouter
+        self.is_vllm = bool(api_base) and not self.is_openrouter and not self.provider_format
         
         # Configure LiteLLM based on provider
         if api_key:
@@ -43,6 +45,16 @@ class LiteLLMProvider(LLMProvider):
             elif self.is_vllm:
                 # vLLM/custom endpoint - uses OpenAI-compatible API
                 os.environ["OPENAI_API_KEY"] = api_key
+            elif self.provider_format:
+                # Custom provider with specific format
+                if self.provider_format == "openai":
+                    os.environ["OPENAI_API_KEY"] = api_key
+                elif self.provider_format == "anthropic":
+                    os.environ["ANTHROPIC_API_KEY"] = api_key
+                # Others might need specific env vars, but we can assume user set them
+                # or litellm handles it via kwargs if we pass params correctly.
+                # Ideally, we set standard ones.
+
             elif "anthropic" in default_model:
                 os.environ.setdefault("ANTHROPIC_API_KEY", api_key)
             elif "openai" in default_model or "gpt" in default_model:
@@ -94,9 +106,23 @@ class LiteLLMProvider(LLMProvider):
         ):
             model = f"zhipu/{model}"
         
-        # For vLLM, use hosted_vllm/ prefix per LiteLLM docs
+        # Handle custom provider format
+        if self.provider_format:
+            if not model.startswith(f"{self.provider_format}/"):
+                # If provider is "openai" and model already has it, or if user didn't specify
+                # LiteLLM typically needs "provider/model" for some (like ollama)
+                # but "model" for openai if api_base is set.
+
+                # However, for custom OpenAI-compatible endpoints, LiteLLM recommends "openai/model"
+                # OR "hosted_vllm/model".
+
+                # If the user specified a format, we use it as prefix.
+                # e.g. provider_format="ollama", model="llama3" -> "ollama/llama3"
+                model = f"{self.provider_format}/{model}"
+
+        # For vLLM (legacy/auto-detect), use hosted_vllm/ prefix per LiteLLM docs
         # Convert openai/ prefix to hosted_vllm/ if user specified it
-        if self.is_vllm:
+        elif self.is_vllm:
             model = f"hosted_vllm/{model}"
         
         # For Gemini, ensure gemini/ prefix if not already present

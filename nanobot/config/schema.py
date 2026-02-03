@@ -53,6 +53,11 @@ class ProviderConfig(BaseModel):
     api_base: str | None = None
 
 
+class CustomConfig(ProviderConfig):
+    """Custom provider configuration."""
+    provider: str | None = None  # e.g. "ollama", "azure", "openai"
+
+
 class ProvidersConfig(BaseModel):
     """Configuration for LLM providers."""
     anthropic: ProviderConfig = Field(default_factory=ProviderConfig)
@@ -61,6 +66,7 @@ class ProvidersConfig(BaseModel):
     zhipu: ProviderConfig = Field(default_factory=ProviderConfig)
     vllm: ProviderConfig = Field(default_factory=ProviderConfig)
     gemini: ProviderConfig = Field(default_factory=ProviderConfig)
+    custom: CustomConfig = Field(default_factory=CustomConfig)
 
 
 class GatewayConfig(BaseModel):
@@ -99,8 +105,9 @@ class Config(BaseSettings):
         return Path(self.agents.defaults.workspace).expanduser()
     
     def get_api_key(self) -> str | None:
-        """Get API key in priority order: OpenRouter > Anthropic > OpenAI > Gemini > Zhipu > vLLM."""
+        """Get API key in priority order: Custom > OpenRouter > Anthropic > OpenAI > Gemini > Zhipu > vLLM."""
         return (
+            self.providers.custom.api_key or
             self.providers.openrouter.api_key or
             self.providers.anthropic.api_key or
             self.providers.openai.api_key or
@@ -111,13 +118,21 @@ class Config(BaseSettings):
         )
     
     def get_api_base(self) -> str | None:
-        """Get API base URL if using OpenRouter, Zhipu or vLLM."""
+        """Get API base URL if using Custom, OpenRouter, Zhipu or vLLM."""
+        if self.providers.custom.api_base:
+            return self.providers.custom.api_base
         if self.providers.openrouter.api_key:
             return self.providers.openrouter.api_base or "https://openrouter.ai/api/v1"
         if self.providers.zhipu.api_key:
             return self.providers.zhipu.api_base
         if self.providers.vllm.api_base:
             return self.providers.vllm.api_base
+        return None
+
+    def get_provider_format(self) -> str | None:
+        """Get provider format (supplier) if custom is used."""
+        if self.providers.custom.api_base:
+            return self.providers.custom.provider
         return None
     
     class Config:
